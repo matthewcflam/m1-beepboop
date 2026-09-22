@@ -12,4 +12,7 @@ if (Number.isNaN(port) || port < 1 || port > 65535) {
 
 export const env = {
   port,
+  nodeEnv: process.env.NODE_ENV ?? 'development',
+  firstName: process.env.STUDENT_FIRST_NAME ?? 'Matthew',
+  lastName: process.env.STUDENT_LAST_NAME ?? 'Lam',
 } as const;
