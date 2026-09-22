@@ -17,8 +17,7 @@ data class TimerUiState(
     val secondsInput: Int = 0,
     val remainingMs: Long = 0,
     val totalMs: Long = 0,
-    val phase: TimerPhase = TimerPhase.STOPPED,
-    val showSurprise: Boolean = false
+    val phase: TimerPhase = TimerPhase.STOPPED
 )
 
 private const val TICK_MS = 100L
@@ -49,8 +48,7 @@ class TimerViewModel : ViewModel() {
             it.copy(
                 totalMs = totalMs,
                 remainingMs = totalMs,
-                phase = TimerPhase.RUNNING,
-                showSurprise = false
+                phase = TimerPhase.RUNNING
             )
         }
         runTicker()
@@ -79,14 +77,9 @@ class TimerViewModel : ViewModel() {
             it.copy(
                 remainingMs = 0,
                 totalMs = 0,
-                phase = TimerPhase.STOPPED,
-                showSurprise = false
+                phase = TimerPhase.STOPPED
             )
         }
-    }
-
-    fun dismissSurprise() {
-        _uiState.update { it.copy(showSurprise = false) }
     }
 
     private fun runTicker() {
@@ -97,7 +90,7 @@ class TimerViewModel : ViewModel() {
                     .coerceAtLeast(0)
                 _uiState.update { it.copy(remainingMs = remaining) }
                 if (remaining <= 0L) {
-                    _uiState.update { it.copy(phase = TimerPhase.FINISHED, showSurprise = true) }
+                    _uiState.update { it.copy(phase = TimerPhase.FINISHED) }
                     break
                 }
                 delay(TICK_MS)

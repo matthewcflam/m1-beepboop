@@ -26,18 +26,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.cpen321application.surprise.SurpriseContent
+import com.example.cpen321application.surprise.FallSpec
+import com.example.cpen321application.surprise.fallToFloor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimerScreen(onBack: () -> Unit, viewModel: TimerViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val fallen = uiState.phase == TimerPhase.FINISHED
+    // Bottom edge of the content area in root coordinates — where fallen elements land.
+    var floorBottom by remember { mutableFloatStateOf(0f) }
+    val floor = { floorBottom }
 
     LaunchedEffect(uiState.phase) {
         if (uiState.phase == TimerPhase.FINISHED) {
@@ -57,6 +67,7 @@ fun TimerScreen(onBack: () -> Unit, viewModel: TimerViewModel = viewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .onGloballyPositioned { floorBottom = it.boundsInRoot().bottom }
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -76,12 +87,19 @@ fun TimerScreen(onBack: () -> Unit, viewModel: TimerViewModel = viewModel()) {
                 Box(contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.size(160.dp),
+                        modifier = Modifier
+                            .size(160.dp)
+                            .fallToFloor(fallen, floor, FallSpec(delayMs = 0, driftX = 0.dp, rotationDeg = -8f)),
                         strokeWidth = 8.dp
                     )
+                    // Lands resting inside the bottom of the fallen ring.
                     Text(
                         text = formatRemaining(uiState.remainingMs),
-                        style = MaterialTheme.typography.displaySmall
+                        style = MaterialTheme.typography.displaySmall,
+                        modifier = Modifier.fallToFloor(
+                            fallen, floor,
+                            FallSpec(delayMs = 120, driftX = 0.dp, rotationDeg = 12f, floorInset = 30.dp)
+                        )
                     )
                 }
             }
@@ -91,7 +109,15 @@ fun TimerScreen(onBack: () -> Unit, viewModel: TimerViewModel = viewModel()) {
 
             when (uiState.phase) {
                 TimerPhase.STOPPED, TimerPhase.FINISHED -> {
-                    Button(onClick = viewModel::start, enabled = canStart) { Text("Start") }
+                    // Stays "enabled" once fallen so it keeps its colour; fallToFloor swallows taps.
+                    Button(
+                        onClick = { if (!fallen) viewModel.start() },
+                        enabled = canStart || fallen,
+                        modifier = Modifier.fallToFloor(
+                            fallen, floor,
+                            FallSpec(delayMs = 60, driftX = (-120).dp, rotationDeg = -15f)
+                        )
+                    ) { Text("Start") }
                 }
                 TimerPhase.RUNNING -> {
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -107,14 +133,16 @@ fun TimerScreen(onBack: () -> Unit, viewModel: TimerViewModel = viewModel()) {
                 }
             }
 
-            if (uiState.phase == TimerPhase.FINISHED) {
-                OutlinedButton(onClick = viewModel::reset) { Text("Reset") }
+            if (fallen) {
+                OutlinedButton(
+                    onClick = {},
+                    modifier = Modifier.fallToFloor(
+                        fallen, floor,
+                        FallSpec(delayMs = 200, driftX = 120.dp, rotationDeg = 10f)
+                    )
+                ) { Text("Reset") }
             }
         }
-    }
-
-    if (uiState.showSurprise) {
-        SurpriseContent(onDismiss = viewModel::dismissSurprise)
     }
 }
 
