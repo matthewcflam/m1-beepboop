@@ -88,7 +88,11 @@ fun LoginScreen(onBack: () -> Unit, viewModel: LoginViewModel = viewModel()) {
             }
 
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.padding(top = 8.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 8.dp)
+                )
             }
 
             uiState.errorMessage?.let { error ->

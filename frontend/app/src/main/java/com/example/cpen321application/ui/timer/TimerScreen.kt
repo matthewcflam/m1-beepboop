@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -129,11 +130,12 @@ private fun DurationPicker(
         verticalAlignment = Alignment.CenterVertically
     ) {
         NumberStepper(label = "min", value = minutes, range = 0..99, onValueChange = onMinutesChange)
-        Text(":", style = MaterialTheme.typography.headlineLarge)
+        Text(":", style = MaterialTheme.typography.displaySmall)
         NumberStepper(label = "sec", value = seconds, range = 0..59, onValueChange = onSecondsChange)
     }
 }
 
+// Vertical (+ / value / −) layout keeps both steppers narrow enough to fit side by side on any phone.
 @Composable
 private fun NumberStepper(
     label: String,
@@ -141,16 +143,28 @@ private fun NumberStepper(
     range: IntRange,
     onValueChange: (Int) -> Unit
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Text(label, style = MaterialTheme.typography.labelMedium)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(onClick = { onValueChange((value - 1).coerceIn(range)) }) { Text("−") }
-            Text(
-                text = value.toString().padStart(2, '0'),
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            OutlinedButton(onClick = { onValueChange((value + 1).coerceIn(range)) }) { Text("+") }
+        FilledTonalIconButton(
+            onClick = { onValueChange((value + 1).coerceIn(range)) },
+            enabled = value < range.last,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Text("+", style = MaterialTheme.typography.titleLarge)
+        }
+        Text(
+            text = value.toString().padStart(2, '0'),
+            style = MaterialTheme.typography.displaySmall
+        )
+        FilledTonalIconButton(
+            onClick = { onValueChange((value - 1).coerceIn(range)) },
+            enabled = value > range.first,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Text("−", style = MaterialTheme.typography.titleLarge)
         }
     }
 }
