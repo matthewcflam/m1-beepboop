@@ -17,12 +17,24 @@ if (localPropertiesFile.exists()) {
 fun localProperty(name: String, default: String = ""): String =
     localProperties.getProperty(name)?.trim()?.removeSurrounding("\"") ?: default
 
+// Release signing is optional at configuration time so debug builds never
+// break on a fresh clone; only the assembleRelease task fails, with a clear
+// message, if these are missing. See local.properties.example.
+val releaseStoreFile = localProperty("RELEASE_STORE_FILE")
+val releaseStorePassword = localProperty("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = localProperty("RELEASE_KEY_ALIAS")
+val releaseKeyPassword = localProperty("RELEASE_KEY_PASSWORD")
+val hasReleaseSigning = releaseStoreFile.isNotBlank() &&
+    releaseStorePassword.isNotBlank() &&
+    releaseKeyAlias.isNotBlank() &&
+    releaseKeyPassword.isNotBlank()
+
 android {
     namespace = "com.example.cpen321application"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.cpen321application"
+        applicationId = "com.mlam24.cpen321application"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
@@ -44,6 +56,17 @@ android {
         )
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -51,6 +74,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
@@ -70,15 +96,38 @@ kotlin {
     jvmToolchain(17)
 }
 
+afterEvaluate {
+    if (!hasReleaseSigning) {
+        tasks.matching { it.name == "assembleRelease" }.configureEach {
+            doFirst {
+                throw GradleException(
+                    "Release signing config missing: set RELEASE_STORE_FILE, " +
+                        "RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, and RELEASE_KEY_PASSWORD " +
+                        "in local.properties (see local.properties.example)."
+                )
+            }
+        }
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

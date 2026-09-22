@@ -4,7 +4,14 @@ sdk.dir=/path/to/Android/sdk
 # Backend base URL baked into the APK at build time.
 API_BASE_URL=http://10.0.2.2:3000
 
-# Google OAuth client ID.
+# Google OAuth client ID (the "Web application" client, not the Android one).
 GOOGLE_CLIENT_ID=
+
+# Release signing (required only for `./gradlew assembleRelease`; debug builds
+# don't need these). Keep the .jks file outside the repo.
+RELEASE_STORE_FILE=/path/to/m1-release.jks
+RELEASE_STORE_PASSWORD=changeit
+RELEASE_KEY_ALIAS=m1
+RELEASE_KEY_PASSWORD=changeit
 
 # Other API keys, secrets, and configurations

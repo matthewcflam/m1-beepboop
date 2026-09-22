@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cleartext is permitted only for the Android emulator's host loopback alias
+  (10.0.2.2) and localhost, for local backend development. Everything else
+  falls through to the platform default (HTTPS only, system trust anchors),
+  which is what the release build against the deployed server uses.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>
